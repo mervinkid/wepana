@@ -1,0 +1,11 @@
+# IDEA
+.idea/
+
+# Package
+dist/
+
+# Compile
+*.pyc
+
+# Test Script
+test.py
