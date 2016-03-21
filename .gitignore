@@ -3,6 +3,7 @@
 
 # Package
 dist/
+html_analyzer.egg-info/
 
 # Compile
 *.pyc

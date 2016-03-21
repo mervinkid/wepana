@@ -1,16 +1,15 @@
-# _*_ coding=utf-8 _*_
+# -*- coding:utf-8 -*-
 
 import os
 import re
-from urllib import error
-from urllib import request
+from urllib import request, error, parse
 
-import regex
-from exception import ConnectionTimeout, InvalidateUrl
+from . import regex
+from . import error as e
 
 # export table
 __all__ = [
-    'BaseAnalyzer', 'PageAnalyzer'
+    'BaseAnalyzer', 'WebPageAnalyzer'
 ]
 
 
@@ -40,17 +39,17 @@ class BaseAnalyzer:
 
         # validate timeout
         if isinstance(timeout, int):
-            self.__timeout = timeout
+            self.timeout = timeout
 
         # validate charset
         if isinstance(charset, str):
-            self.__charset = charset
+            self.charset = charset
 
         # validate url and connect
         if isinstance(url, str):
             if self.url_pattern.match(url) is None:
-                raise InvalidateUrl()
-            self.connect(url, timeout=self.__timeout)
+                raise e.InvalidateUrl()
+            self.connect(url, timeout=self.timeout)
 
     def read_text(self, text):
         """
@@ -112,14 +111,16 @@ class BaseAnalyzer:
 
         # send http request
         try:
-            response = request.urlopen(url, timeout=timeout)
+            # prepare url
+            url = parse.quote(url, '/:?=&%')
+            response = request.urlopen(url, timeout=(self.timeout if timeout is None else timeout))
             self.response_text = bytes(response.read()).decode(self.charset if charset is None else charset)
             self.url = url
             root_url_search = self.root_url_pattern.search(url)
             if root_url_search is not None:
                 self.root_url = str(root_url_search.group())
         except error.URLError:
-            raise ConnectionTimeout()
+            raise e.ConnectionTimeout()
 
     def find(self, pattern):
         """
@@ -130,11 +131,10 @@ class BaseAnalyzer:
         return re.findall(pattern, self.response_text)
 
 
-class PageAnalyzer(BaseAnalyzer):
+class WebPageAnalyzer(BaseAnalyzer):
     """
-    MZSpider
+    Web Page Analyzer
     """
-
     # regex pattern
     title_pattern = re.compile(regex.HTML_TITLE, re.I)
     href_pattern = re.compile(regex.PROPERTY_HREF, re.I)
@@ -143,7 +143,7 @@ class PageAnalyzer(BaseAnalyzer):
     meta_pattern = re.compile(regex.HTML_META, re.I)
 
     def __init__(self, **kwargs):
-        super(PageAnalyzer, self).__init__(**kwargs)
+        super(WebPageAnalyzer, self).__init__(**kwargs)
 
     def get_title(self):
         """
