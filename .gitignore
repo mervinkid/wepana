@@ -3,10 +3,13 @@
 
 # Package
 dist/
-html_analyzer.egg-info/
+build/
+wepana.egg-info/
 
 # Compile
 *.pyc
 
 # Test Script
-test.py
+test/
+__pycache__/
+wepana/__pycache__/

@@ -1,4 +1,10 @@
-# _*_ coding=utf-8 _*_
+# -*- coding: utf-8 -*-
+
+"""
+wepana.error
+
+This module provides error definitions used by analyzer .
+"""
 
 __all__ = [
     'ConnectionTimeout',
@@ -7,8 +13,7 @@ __all__ = [
 
 
 class InvalidateUrl(Exception):
-    """
-    invalidate url error
+    """invalidate url error
     """
 
     def __init__(self):
@@ -16,8 +21,7 @@ class InvalidateUrl(Exception):
 
 
 class ConnectionTimeout(Exception):
-    """
-    connection timeout error
+    """connection timeout error
     """
 
     def __init__(self):

@@ -1,4 +1,10 @@
-# -*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
+
+"""
+wepana.analyzer
+
+This module provides analyzers
+"""
 
 import os
 import re
@@ -9,13 +15,13 @@ from . import error as e
 
 # export table
 __all__ = [
-    'BaseAnalyzer', 'WebPageAnalyzer'
+    'BaseAnalyzer',
+    'WebPageAnalyzer'
 ]
 
 
 class BaseAnalyzer:
-    """
-    Base Analyzer
+    """Base Analyzer
     """
     url = ''
     root_url = ''
@@ -28,14 +34,13 @@ class BaseAnalyzer:
     root_url_pattern = re.compile(regex.ROOT_URL, re.I)
 
     def __init__(self, **kwargs):
-        """
-        constructor
+        """constructor
         :param kwargs: url, timeout, charset
         :return:
         """
-        url = kwargs.get('url', None)
-        timeout = kwargs.get('timeout', None)
-        charset = kwargs.get('charset', None)
+        url = kwargs.get('url', '')
+        timeout = kwargs.get('timeout', 5)
+        charset = kwargs.get('charset', 'utf-8')
 
         # validate timeout
         if isinstance(timeout, int):
@@ -46,14 +51,13 @@ class BaseAnalyzer:
             self.charset = charset
 
         # validate url and connect
-        if isinstance(url, str):
+        if isinstance(url, str) and len(url.strip()) != 0:
             if self.url_pattern.match(url) is None:
                 raise e.InvalidateUrl()
             self.connect(url, timeout=self.timeout)
 
     def read_text(self, text):
-        """
-        read content from text
+        """read content from text
         :param text:
         :return:
         """
@@ -63,8 +67,7 @@ class BaseAnalyzer:
         self.response_text = text
 
     def read_file(self, path):
-        """
-        read content from file
+        """read content from file
         :param path:
         :return:
         """
@@ -75,26 +78,28 @@ class BaseAnalyzer:
         if not os.path.isfile(path):
             raise FileNotFoundError('file not found.')
         # process file
-        file = open(path, 'r')
-        self.response_text = str(file.read())
+        content_file = open(path, 'r')
+        self.response_text = str(content_file.read())
 
     def ready(self):
-        """
-        validate data
+        """validate data
         :return: bool
         """
         return self.response_text is not None
 
-    def get_response_text(self):
+    def reset(self):
+        """Reset status
         """
-        export response text
+        self.response_text = None
+
+    def get_response_text(self):
+        """export response text
         :return: str
         """
         return self.response_text
 
     def connect(self, url, **kwargs):
-        """
-        connect to target url
+        """connect to target url
         :param url: url address
         :param kwargs: timeout, charset
         :return:
@@ -103,11 +108,11 @@ class BaseAnalyzer:
         if not isinstance(url, str):
             raise TypeError('url must be a str value.')
 
-        timeout = kwargs.get('timeout', None)
+        timeout = kwargs.get('timeout', self.timeout)
         if not isinstance(timeout, int):
             raise TypeError('timeout must be a int value.')
 
-        charset = kwargs.get('charset', None)
+        charset = kwargs.get('charset', self.charset)
 
         # send http request
         try:
@@ -123,8 +128,7 @@ class BaseAnalyzer:
             raise e.ConnectionTimeout()
 
     def find(self, pattern):
-        """
-        find content by using pattern
+        """find content by using pattern
         :param pattern:
         :return:
         """
@@ -132,28 +136,23 @@ class BaseAnalyzer:
 
 
 class WebPageAnalyzer(BaseAnalyzer):
+    """Web Page Analyzer
     """
-    Web Page Analyzer
-    """
-    # regex pattern
-    title_pattern = re.compile(regex.HTML_TITLE, re.I)
-    href_pattern = re.compile(regex.PROPERTY_HREF, re.I)
-    image_pattern = re.compile(regex.HTML_IMAGE, re.I)
-    src_pattern = re.compile(regex.PROPERTY_SRC, re.I)
-    meta_pattern = re.compile(regex.HTML_META, re.I)
 
     def __init__(self, **kwargs):
         super(WebPageAnalyzer, self).__init__(**kwargs)
 
     def get_title(self):
-        """
-        get title
+        """get title
         :return: str
         """
         # validate data
         if not self.ready():
             return ''
-        title_tag_search = self.title_pattern.search(self.response_text)
+        # init regex patterns
+        title_pattern = re.compile(regex.HTML_TITLE, re.I)
+
+        title_tag_search = title_pattern.search(self.response_text)
         if title_tag_search is None:
             return ''
         title_tag = str(title_tag_search.group())
@@ -161,40 +160,54 @@ class WebPageAnalyzer(BaseAnalyzer):
         return title
 
     def get_images(self):
-        """
-        get images
+        """get images
         :return: list(str())
         """
         # validate data
         if not self.ready():
             return []
 
-        image_tags = self.image_pattern.findall(self.response_text)
+        # init regex patterns
+        src_pattern = re.compile(regex.PROPERTY_SRC, re.I)
+        url_pattern = re.compile(regex.URL, re.I)
+        image_pattern = re.compile(regex.HTML_IMAGE, re.I)
+
+        image_tags = image_pattern.findall(self.response_text)
         result = []
         for image_tag in image_tags:
-            src_properties = self.src_pattern.findall(image_tag)
+            src_properties = src_pattern.findall(image_tag)
             if len(src_properties) == 0:
                 continue
             src_property = src_properties[0]
-            image_url = src_property.replace(r'src=("|\')', '').replace('("|', '').strip()
-            if self.url_pattern.match(image_url) is None:
-                image_url = '%s%s' % (self.url, image_url)
+            image_url = src_property.replace(r'src=("|\')', '').replace('("|', '').strip(' ')
+            if url_pattern.match(image_url) is None:
+                if image_url.startswith('//'):
+                    image_url = 'http:%s' % image_url
+                else:
+                    image_url = '%s%s' % (self.url, image_url)
             result.append(image_url)
         return result
 
     def get_links(self):
-        """
-        get links
+        """get links
         :return: list(str())
         """
         # validate data
         if not self.ready():
             return []
 
-        href_list = list(set(self.href_pattern.findall(self.response_text)))
+        # init regex patterns
+        href_pattern = re.compile(regex.PROPERTY_HREF, re.I)
+
+        href_list = list(set(href_pattern.findall(self.response_text)))
         result = []
+        # init regex patterns
+        url_pattern = re.compile(regex.URL, re.I)
+        mail_pattern = re.compile(regex.MAIL, re.I)
+
+        # process
         for href in href_list:
-            if self.url_pattern.match(href) is None:
+            if url_pattern.match(href) is None and len(mail_pattern.findall(href)) == 0:
                 if str(href).startswith('/'):
                     href = '%s%s' % (self.root_url, href)
                 else:
@@ -203,20 +216,22 @@ class WebPageAnalyzer(BaseAnalyzer):
         return result
 
     def get_metas(self):
-        """
-        get meta info
+        """get meta info
         :return: list(str)
         """
         # validate data
         if not self.ready():
             return []
 
-        metas = list(set(self.meta_pattern.findall(self.response_text)))
+        # init regex patterns
+        meta_pattern = re.compile(regex.HTML_META, re.I)
+
+        # process
+        metas = list(set(meta_pattern.findall(self.response_text)))
         return metas
 
     def get_keywords(self):
-        """
-        get keywords
+        """get keywords
         :return:
         """
         metas = self.get_metas()
