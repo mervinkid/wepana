@@ -51,7 +51,7 @@ Load from url.
 ```
 # load with init
 site = WebPageAnalyzer(url='http://github.com')
-# load before init
+# load after init
 site.connect('http://github.com')
 ```
 
