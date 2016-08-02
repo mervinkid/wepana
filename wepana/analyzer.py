@@ -7,11 +7,21 @@ This module provides analyzers
 """
 
 import os
+import platform
 import re
-from urllib import request, error, parse
 
-from . import regex
 from . import error as e
+from . import regex
+
+py_major = int(platform.python_version().split('.')[0])
+if py_major == 3:
+    from urllib.request import urlopen as urlopen
+    from urllib.error import URLError as URLError
+    from urllib.parse import quote as quote
+else:
+    from urllib2 import urlopen as urlopen
+    from urllib2 import URLError as URLError
+    from urllib2 import quote as quote
 
 # export table
 __all__ = [
@@ -20,7 +30,7 @@ __all__ = [
 ]
 
 
-class BaseAnalyzer:
+class BaseAnalyzer(object):
     """Base Analyzer
     """
     url = ''
@@ -76,7 +86,7 @@ class BaseAnalyzer:
             raise TypeError('path must be a str value.')
         # check file
         if not os.path.isfile(path):
-            raise FileNotFoundError('file not found.')
+            raise e.FileNotFound(path)
         # process file
         content_file = open(path, 'r')
         self.response_text = str(content_file.read())
@@ -117,14 +127,14 @@ class BaseAnalyzer:
         # send http request
         try:
             # prepare url
-            url = parse.quote(url, '/:?=&%')
-            response = request.urlopen(url, timeout=(self.timeout if timeout is None else timeout))
+            url = quote(url, '/:?=&%')
+            response = urlopen(url, timeout=(self.timeout if timeout is None else timeout))
             self.response_text = bytes(response.read()).decode(self.charset if charset is None else charset)
             self.url = url
             root_url_search = self.root_url_pattern.search(url)
             if root_url_search is not None:
                 self.root_url = str(root_url_search.group())
-        except error.URLError:
+        except URLError:
             raise e.ConnectionTimeout()
 
     def find(self, pattern):
@@ -155,7 +165,7 @@ class WebPageAnalyzer(BaseAnalyzer):
         title_tag_search = title_pattern.search(self.response_text)
         if title_tag_search is None:
             return ''
-        title_tag = str(title_tag_search.group())
+        title_tag = title_tag_search.group()
         title = title_tag.replace('<title>', '').replace('</title>', '').strip()
         return title
 
@@ -208,7 +218,7 @@ class WebPageAnalyzer(BaseAnalyzer):
         # process
         for href in href_list:
             if url_pattern.match(href) is None and len(mail_pattern.findall(href)) == 0:
-                if str(href).startswith('/'):
+                if href.startswith('/'):
                     href = '%s%s' % (self.root_url, href)
                 else:
                     href = '%s/%s' % (self.url, href)

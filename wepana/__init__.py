@@ -32,7 +32,7 @@ from .analyzer import BaseAnalyzer, WebPageAnalyzer
 from .error import InvalidateUrl, ConnectionTimeout
 
 __title__ = 'wepana'
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __author__ = 'Mervin Zhang'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2016 Mervin Zhang'

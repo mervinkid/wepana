@@ -6,6 +6,7 @@ wepana.regex
 This module provides regex expression that used for web page content analyzing.
 """
 
+# export table
 __all__ = [
     'HTML_TITLE',
     'HTML_IMAGE',
