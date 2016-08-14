@@ -12,7 +12,7 @@
               |_|
 ```
 
-Wepana is an analyzer for web page content powered by [Python](https://www.python.org).
+Wepana is an analyzer for web page content powered by [Python](https://www.python.org).<br>
 It compatible with both python2 and python3. 
 
 ## Dependencies
@@ -34,77 +34,53 @@ Wepana can auto detect the major version of python runtime and use the build in 
 
 ### Installation
 
-```
+```bash
 pip install wepana
 ```
 
-### Load
+### Sample
 
-Import analyzer
-
-```
+```python
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python
 from wepana import WebPageAnalyzer
-```
 
-Load from url.
+def foo():
+    # load with init
+    analyzer = WebPageAnalyzer(url='http://github.com')
+    
+    # load after init
+    analyzer.connect('http://github.com')
+    
+    # load from file
+    analyzer.read_file('/path/to/the/file.html')
+    
+    # load form text
+    analyzer.read_text('text content')
+    
+    # check status
+    if not analyzer.read():
+        print('wepana analyzer is not ready.')
+        return
 
-```
-# load with init
-site = WebPageAnalyzer(url='http://github.com')
-# load after init
-site.connect('http://github.com')
-```
+    # get title
+    analyzer.get_title()
+    
+    # get keywords
+    analyzer.get_keywords()
+    
+    # get images
+    analyzer.get_images()
+    
+    # get likes
+    analyzer.get_links()
+    
+    # reset analyzer
+    analyzer.reset()
 
-Load from file.
+if __name__ == '__main__':
+    foo()
 
-```
-analyzer = WebPageAnalyzer()
-analyzer.read_file('/path/to/the/file.html')
-```
-
-Load from text.
-
-```
-analyzer = WebPageAnalyzer()
-analyzer.read_text('text content')
-```
-
-Check analyzer is ready.
-
-```
-analyzer.read()
-```
-
-Reset analyzer.
-
-```
-analyzer.reset()
-```
-
-### Analyze
-
-Get title.
-
-```
-analyzer.get_title()
-```
-
-Get keywords.
-
-```
-analyzer.get_keywords()
-```
-
-Get images.
-
-```
-analyzer.get_images()
-```
-
-Get links.
-
-```
-analyzer.get_links()
 ```
 
 ## Contributing
