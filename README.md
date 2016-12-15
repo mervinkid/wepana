@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
 ## Authors
 
-[@Mervin](https://github.com/mofei2816) 
+[@Mervin](https://github.com/mervinkid) 
 
 ## License
 
